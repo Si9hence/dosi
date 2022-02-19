@@ -1,52 +1,96 @@
+from numpy import datetime_as_string
 import pandas as pd
 import datetime
 import os
 import git
+import yaml
+
+config = yaml.safe_load(open('./configs/covid.yaml', "r"))
+
+def make_rabbit(smth):
+    rabbit = f" (\_/)\n(・_・)\n/  >{smth}\n"
+    return rabbit
+
 
 def data_update():
-    g = git.cmd.Git(".\data\COVID-19")
-    g.pull()
-
-def get_new_confirmed(dt: str, country: str):
-    # dt in YYYY-MM-DD
-    if dt:
-        dt = [int(num) for num in dt.split("-")]
-        dt = datetime.date(dt[0], dt[1], dt[2])
+    td = datetime.datetime.now()
+    if  (td - datetime.datetime.strptime(config['last_update'], "%Y-%m-%d %H:%M:%S")).seconds > 7200:
+        config['last_update'] = td.strftime("%Y-%m-%d %H:%M:%S")
+        g = git.cmd.Git("/home/si9h/COVID-19")
+        g.pull()
+        yaml.dump(config, open('./configs/covid.yaml', "w"))
+        return
     else:
-        dt = datetime.datetime.today() if not dt else dt
+        return
 
-    path_src = "./data/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports"
+def kw_to_country(kw: str):
+    k2c = config['k2c']
+    if kw.lower() in k2c:
+        return k2c[kw.lower()]
+    else:
+        return kw.title()
+
+def get_new_confirmed(country: str, dt: int=20)->str:
+
+    def bar_chat(data: list[datetime.datetime, int]):
+        max_val = max(data, key=lambda x:x[1])[1]
+        tmp = [[item[0].strftime("%Y-%m-%d"), round(item[1]/max_val*20)] for item in data]
+        res = f"```{country} new cases {dt}-days trend\n"
+        for item in tmp:
+            res += item[0] + "  " + '█'*item[1] + "\n"
+        res += f"In {tmp[-1][0]}, the new confirmed cases:\n"
+        res += make_rabbit(data[-1][-1])
+        res += "```"
+        return res
+    # data_update()
+    # dt in YYYY-MM-DD
+    country = kw_to_country(kw=country)
+    # path_src = "./data/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports"
+    path_src = config['path_src']
     files = [file.split('.')[0] for file in os.listdir(path_src)]
 
-    dt_1 = dt
-    dt_1_str = dt_1.strftime("%m-%d-%Y")
+    t_1 = datetime.datetime.now()
+    t_1_mdy = t_1.strftime("%m-%d-%Y")
+
     for retry in range(5):
-        dt_1 = dt_1 - datetime.timedelta(days=1)
-        dt_1_str = dt_1.strftime("%m-%d-%Y")
-        if dt_1_str in files:
+        t_1 = t_1 - datetime.timedelta(days=1)
+        t_1_mdy = t_1.strftime("%m-%d-%Y")
+        if t_1_mdy in files:
             break
-        elif retry > 1:
-            data_update()
         elif retry == 5:
             return f"now data found in the last {retry} days"
 
-    dt_2 = dt_1 - datetime.timedelta(days=1)
-    dt_2_str = dt_2.strftime("%m-%d-%Y")
+    ts = [t_1-datetime.timedelta(days=i) for i in range(0, dt+1)]
+    info = list()
+    for t in ts:
+        t_mdy = t.strftime("%m-%d-%Y")
+        tmp = pd.read_csv(path_src + "/" + f"{t_mdy}.csv")
+        if country not in tmp['Country_Region'].values:
+            return "country error"
+        info.append([t, sum(tmp['Confirmed'].loc[tmp['Country_Region'] == country])])
+    
+    for i in range(len(info)-1):
+        info[i][-1] =  info[i][-1]  - info[i+1][-1]
+    info.pop()
+    info = info[::-1]
+    # dt_2 = t_1 - datetime.timedelta(days=1)
+    # dt_2_mdy = dt_2.strftime("%m-%d-%Y")
 
-    df_1 = pd.read_csv(path_src + "/" + f"{dt_1_str}.csv")
-    df_2 = pd.read_csv(path_src + "/" + f"{dt_2_str}.csv")
-    if country not in df_1['Country_Region'].values:
-        return "country error"
-    confirmed_1 = sum(df_1['Confirmed'].loc[df_1['Country_Region'] == country])
-    confirmed_2 = sum(df_2['Confirmed'].loc[df_2['Country_Region'] == country])
-    diff = confirmed_1 - confirmed_2
+    # df_1 = pd.read_csv(path_src + "/" + f"{t_1_mdy}.csv")
+    # df_2 = pd.read_csv(path_src + "/" + f"{dt_2_mdy}.csv")
+    # if country not in df_1['Country_Region'].values:
+    #     return "country error"
+    # confirmed_1 = sum(df_1['Confirmed'].loc[df_1['Country_Region'] == country])
+    # # confirmed_2 = sum(df_2['Confirmed'].loc[df_2['Country_Region'] == country])
+    # diff = confirmed_1 - confirmed_2
 
-    dt_1_str_YMD = dt_1.strftime("%Y-%m-%d")
-    dt_2_str_YMD = dt_2.strftime("%Y-%m-%d")
+    # dt_1_str_ymd = t_1.strftime("%Y-%m-%d")
+    # dt_2_str_ymd = dt_2.strftime("%Y-%m-%d")
 
-    res = f"New confirmed\n{country}\nfrom {dt_2_str_YMD} to {dt_1_str_YMD} is {diff}\nBRAVO!"
+    # res = f"New confirmed\n{country}\nfrom {dt_2_str_ymd} to {dt_1_str_ymd} is {diff}\nBRAVO!"
+    res = bar_chat(info)
     return res
 
 if __name__ == "__main__":
-    test = pd.read_csv("./test.csv")
-    get_new_confirmed(country="Italy", dt="")
+    data = pd.read_csv('/home/si9h/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/01-01-2021.csv')
+    res = get_new_confirmed(country="Germany", dt=20)

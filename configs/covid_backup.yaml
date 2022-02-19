@@ -1,0 +1,19 @@
+last_update: 2022-02-12 19:31:17
+path_src: ./data/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports
+k2c:
+  jenny: United Kingdom
+  vic: United Kingdom
+  emi: United Kingdom
+  UK: United Kingdom
+  badwoman: Singapore
+  wq: United States of America
+  zzx: United States of America
+# below are country code
+  tw: Taiwan
+  us: United States of America
+  gb: United Kingdom
+  sg: Singapore
+  de: Germany
+  fr: France
+  cn: China
+  
