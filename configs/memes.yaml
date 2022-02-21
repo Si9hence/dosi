@@ -1,0 +1,31 @@
+path_meker:
+  ./data/meker
+surjection:
+  表演一下:
+    src:
+      again.png
+    pos:
+      [[20, 375], [10, 535]]
+    font_size:
+      [20, 15]
+  hug:
+    src:
+      hug.png
+    pos:
+      [[75, 500]]
+    font_size:
+      [25]
+  wish:
+    src:
+      wish.png
+    pos:
+      [[50, 220]]
+    font_size:
+      [20]
+  huqiuhuqiu:
+    src:
+      voice.png
+    pos:
+      [[50, 55], [60, 315]]
+    font_size:
+      [25, 25]

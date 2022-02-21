@@ -8,48 +8,98 @@ import discord
 from discord.ext.commands import Bot
 from discord import Intents
 from dotenv import load_dotenv
-import get_covid
 
+import get_covid
+import memes
+import io
+import cv2
 load_dotenv()
-get_covid.data_update()
+# get_covid.data_update()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
 # intents = Intents.all()
-bot = Bot(command_prefix='!', proxy="http://localhost:7890")
+bot = Bot(command_prefix='^^', proxy="http://localhost:7890")
+# client = discord.Client(proxy="http://localhost:7890")
 
-client = discord.Client(proxy="http://localhost:7890")
-
+# change presence
+# https://discordpy.readthedocs.io/en/stable/ext/commands/api.html#discord.ext.commands.Bot.change_presence
 @bot.event
 async def on_ready():
     print(f'{bot.user.name} wakes up!')
+    # await bot.change_presence(activity = discord.Activity(
+    #     type = discord.ActivityType.competing,
+    #     name = 'Kindergarten'))
+    await bot.change_presence(activity = discord.Activity(
+        type = discord.ActivityType.playing,
+        name = 'SOlO'))    
+    # await bot.change_presence(activity = discord.Activity(
+    #                       type = discord.ActivityType.playing, 
+    #                       name = 'OutSIDe'))
 
-
-@client.event
-async def on_ready():
-    print(f'{client.user.name} wakes up!')
-
-@bot.command(name='server', help = 'Fetches server information')
+@bot.command(name='server', enabled=False)
 async def fetchServerInfo(ctx):
 	guild = ctx.guild
-	print(1)
 	await ctx.send(f'Server Name: {guild.name}')
 	await ctx.send(f'Server Size: {len(guild.members)}')
-	await ctx.send(f'Server Name: {guild.owner.display_name}')
-# @client.event
-# async def on_member_join(member):
-#     await member.create_dm()
-#     await member.dm_channel.send(
-#         f'Hi {member.name}, welcome to my Discord server!'
-#     )
+
+@bot.command(name='roll', help='roll a dice!')
+async def roll(ctx, number_of_dice: int, number_of_sides: int):
+    dice = [
+        str(random.choice(range(1, number_of_sides + 1)))
+        for _ in range(number_of_dice)
+    ]
+    await ctx.send(', '.join(dice))
+
+@bot.command(name='covid', enable=True, help="covid trend")
+async def covid_trend(ctx, *country):
+        country = " ".join([item.strip() for item in country])
+        # country = message.content.split(":")[-1].strip()
+        response = get_covid.get_new_confirmed(dt=15, country=country)
+        await ctx.send(response)
 
 
-@client.event
-async def on_message(message):
 
-    if client.user == message.author:
-        # print(message.author)
+@bot.command(name='meme', enable=True, help="memememememow")
+async def meker(ctx, template=None, *content):
+    if template == None:
         return
-    print(message.author)
+    flag, response_img = memes.maker(meme=template, sentences=list(content))
+    if flag == 0:
+        await ctx.send('meme not found!')
+    else:
+        picture = discord.File(response_img, filename="meme.png")
+        await ctx.send(file=picture)
+
+@bot.command(name='开摆!', enable=True, help="摆还是不摆, 这是一个问题.")
+async def kaibai_cmd(ctx):
+    take_a_break = [
+        "开摆!"*random.randint(1,30),
+        # "摆"*random.randint(1,30)+"!",
+        "别摆了, "*random.randint(1,30)+"别摆了!"
+    ]
+    response = random.choice(take_a_break)
+    await ctx.send(response)
+
+
+async def send_picture(src, message):
+    with open(src, 'rb') as f:
+        picture = discord.File(f)
+        await message.channel.send(file=picture)
+    return
+
+@bot.event
+async def on_message(message):
+    if bot.user == message.author:
+        return
+    # elif str(message.author) != "Si9H#0724":
+    #     print(str(message.author))
+    #     doutside()
+    #     return
+
+    # async def doutside():
+    #     send_picture(src="./img/doutside.jpg", message=message)
+    #     return
+
     def check_content(msg):
         reserved = {
             " wanna ": " want to "
@@ -57,52 +107,10 @@ async def on_message(message):
         
         for word in reserved:
             if word in msg:
-                msg = msg.replace(word, reserved[word])
+                msg = msg.replace(msg, reserved[word])
         return msg
 
-    # async def send_picture(src):
-    #     with open(src, 'rb') as f:
-    #         picture = discord.File(f)
-    #         await message.channel.send(file=picture)
-    #     return
     content_modified = check_content(message.content)
-    # print(check_content(message.content))
-    # print(message.content)
-    # print(message.content)
-
-    brooklyn_99_quotes = [
-        'I\'m the human form of the 💯 emoji.',
-        'Bingpot!',
-        (
-            'Cool. Cool cool cool cool cool cool cool, '
-            'no doubt no doubt no doubt no doubt.'
-        ),
-    ]
-    take_a_break = [
-        "开摆!"*random.randint(1,30),
-        # "摆"*random.randint(1,30)+"!",
-        # "别摆了, "*random.randint(1,30)+"别摆了!"
-    ]
-
-    inventory = (
-        'do you want to build a snowman?',
-        '99!',
-        '开摆!',
-        'covid: country'
-    )
-
-    def show_option(inventory=inventory):
-        res = ""
-        for item in inventory:
-            res += item + "\n"
-        return res
-
-    # def snowman():
-    #     snowmans = ("\_\_===\_\_\n \\\\(o_O)\n   (]    [)>\n   (       )",
-    #                 "\_===\_\n ( . , . )\n (   :   )\n (   :   )"
-
-    #                 )
-    #     return snowmans[1]
 
     def snowman(msg: str):
         # msg is expected to be in lowercase
@@ -153,43 +161,28 @@ async def on_message(message):
             return res
 
         txt = re.search("^do you want to (build|code) a\s?\w*\s*snowman\??$", msg).string.split(" ")
-        print(txt)
+        # print(txt)
         if (flag := txt[-2]) != "a" and (flag := txt[-2]) != "":
             return build_snowman(flag=flag)
         else:
             return build_snowman()
-    # if message.content == 'Hi DotherSi9H':
-    #     await message.channel.send(show_option())
-    # elif message.content == 'Hi Dosi':
-    #     response = f'AbaAba, why not try <{random.choice(inventory)}> !'
-    #     await message.channel.send(response)
-    # elif "covid:" in message.content:
-    #     country = message.content.split(":")[-1].strip()
-    #     response = get_covid.get_new_confirmed(dt="", country=country)
-    #     await message.channel.send(response)
-    # elif message.content == '99!':
-    #     response = random.choice(brooklyn_99_quotes)
-    #     await message.channel.send(response)
-    # elif message.content == '开摆!':
-    #     response = random.choice(take_a_break)
-    #     await message.channel.send(response)
-    # elif message.content == 'do you want to build a snowman?':
-    #     await message.channel.send(snowman())
-    # elif message.content == 'raise-exception':
-    #     raise discord.DiscordException
 
-    lmal = "Not a good time. Leave me alone. THX."
+    def kaibai_legacy():
+        take_a_break = [
+            "开摆!"*random.randint(1,30),
+            # "摆"*random.randint(1,30)+"!",
+            "别摆了, "*random.randint(1,30) + "别摆了!"
+        ]
+        response = random.choice(take_a_break)
+        return response
+
+
     # time.sleep(3)
-    if message.content == 'Hi DotherSi9H':
-        pass
-        # await message.channel.send(lmal)
-    elif message.content == 'Hi Dosi':
-        # response = f'AbaAba, why not try <{random.choice(inventory)}> !'
-        # await message.channel.send(lmal)
-        pass
+    if re.search("^Hi.*Dosi$", content_modified, flags=re.IGNORECASE):
+        response = f"Hi {message.author.nick}"
+        await message.channel.send(response)
     elif message.content == '+1':
         await message.channel.send("+1")
-    # elif re.search("^covid: \w+$", content_modified, flags=re.IGNORECASE):
     elif re.search("^Hey dosi I'm terribly sorry I'm just wondering if by any chance you happen to have time to very kindly inform me about the covid in the( \w+)+$", content_modified, flags=re.IGNORECASE):
         country = message.content.split("the")[-1].strip()
         # country = message.content.split(":")[-1].strip()
@@ -198,35 +191,25 @@ async def on_message(message):
         if random.randint(0, 20) > 15:
             await message.channel.send("Hump, just let you know Dosi gives you the information because Dosi likes you! (Don't tell Nobody!)")
     elif re.search("^covid:( \w+)+", content_modified, flags=re.IGNORECASE):
-        if random.randint(0, 20) > 5:
+        if random.randint(0, 20) > 2:
             country = message.content.split(":")[-1].strip()
             # country = message.content.split(":")[-1].strip()
             response = get_covid.get_new_confirmed(dt=15, country=country)
             await message.channel.send(response)
         else:
             await message.channel.send("Unfortunately, at the moment I am afraid that I don't have time to help you with your request. I am terribly sorry for that and I hope you find someone else to help you.")
-
-
-    # elif "covid:" in message.content:
-    #     country = message.content.split(":")[-1].strip()
-    #     response = get_covid.get_new_confirmed(dt=20, country=country)
-    #     await message.channel.send(response)
     elif message.content == '99!':
-        # response = random.choice(brooklyn_99_quotes)
-        with open("./img/sabwnk.jpg", 'rb') as f:
-                picture = discord.File(f)
-                await message.channel.send(file=picture)
-        # await message.channel.send(lmal)
+        await send_picture(src = "./data/img/sabwnk.jpg", message=message)
     elif message.content == '开摆!':
-        response = random.choice(take_a_break)
+        response = kaibai_legacy()
         await message.channel.send(response)
     elif re.search("^do you want to (build|code) a (\w* )?snowman\??$", content_modified, flags=re.IGNORECASE):
         response = snowman(msg=content_modified.lower())
         await message.channel.send(response)
     elif message.content == 'ᕕ( ᐛ )ᕗ':
         await message.channel.send("```'ᕕ( ᐛ )ᕗ'```")
-    elif message.content == 'raise-exception':
-        raise discord.DiscordException
-
+    else:
+        pass
+    await bot.process_commands(message)
 bot.run(TOKEN)
 # client.run(TOKEN)
