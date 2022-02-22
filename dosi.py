@@ -18,6 +18,7 @@ load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
 # intents = Intents.all()
+# client = discord.Client(proxy="http://localhost:7890")
 bot = Bot(command_prefix='^^', proxy="http://localhost:7890")
 # client = discord.Client(proxy="http://localhost:7890")
 
@@ -29,12 +30,22 @@ async def on_ready():
     # await bot.change_presence(activity = discord.Activity(
     #     type = discord.ActivityType.competing,
     #     name = 'Kindergarten'))
-    await bot.change_presence(activity = discord.Activity(
-        type = discord.ActivityType.playing,
-        name = 'SOlO'))    
+
+    # activeservers = bot.guilds
+    # print(activeservers)
+    # for guild in activeservers:
+    #     if guild.id == 925477279142903868:
+    #         for channel in guild.channels:
+    #             print(guild.id, guild.name, channel.name, channel.created_at, channel.overwrites)
+    # await bot.change_presence(activity = discord.Activity(
+    #     type = discord.ActivityType.playing,
+    #     name = 'SOlO'))
     # await bot.change_presence(activity = discord.Activity(
     #                       type = discord.ActivityType.playing, 
     #                       name = 'OutSIDe'))
+    await bot.change_presence(activity = discord.Activity(
+                          type = discord.ActivityType.playing, 
+                          name = 'in the abySS'))
 
 @bot.command(name='server', enabled=False)
 async def fetchServerInfo(ctx):
@@ -50,7 +61,7 @@ async def roll(ctx, number_of_dice: int, number_of_sides: int):
     ]
     await ctx.send(', '.join(dice))
 
-@bot.command(name='covid', enable=True, help="covid trend")
+@bot.command(name='covid', enable=True, help="covid trend\n sample code ")
 async def covid_trend(ctx, *country):
         country = " ".join([item.strip() for item in country])
         # country = message.content.split(":")[-1].strip()
@@ -60,10 +71,24 @@ async def covid_trend(ctx, *country):
 
 
 @bot.command(name='meme', enable=True, help="memememememow")
-async def meker(ctx, template=None, *content):
+async def meme_maker(ctx, template=None, *content):
+    flag = 0
+    print(content)
     if template == None:
         return
-    flag, response_img = memes.maker(meme=template, sentences=list(content))
+    else:
+        if not content:
+            contents = list(" ")
+        else:
+            contents = list(content)
+
+        if contents[0] == 'template':
+            print('meme template')
+            flag, response_img, _ = memes.maker_template(meme=template)
+        else:
+            print('meme normal')
+            flag, response_img, _ = memes.maker_main(meme=template, sentences=contents)
+    
     if flag == 0:
         await ctx.send('meme not found!')
     else:
