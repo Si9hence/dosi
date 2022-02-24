@@ -8,7 +8,7 @@ import discord
 from discord.ext.commands import Bot
 from discord import Intents
 from dotenv import load_dotenv
-
+import yaml
 import get_covid
 import memes
 import io
@@ -45,32 +45,42 @@ async def on_ready():
     #                       name = 'OutSIDe'))
     await bot.change_presence(activity = discord.Activity(
                           type = discord.ActivityType.playing, 
-                          name = 'in the abySS'))
+                          name = 'with Labi'))
 
+cog1 = "ko"
 @bot.command(name='server', enabled=False)
 async def fetchServerInfo(ctx):
 	guild = ctx.guild
 	await ctx.send(f'Server Name: {guild.name}')
 	await ctx.send(f'Server Size: {len(guild.members)}')
 
-@bot.command(name='roll', help='roll a dice!')
-async def roll(ctx, number_of_dice: int, number_of_sides: int):
-    dice = [
-        str(random.choice(range(1, number_of_sides + 1)))
-        for _ in range(number_of_dice)
-    ]
-    await ctx.send(', '.join(dice))
-
-@bot.command(name='covid', enable=True, help="covid trend\n sample code ")
+info_covid = yaml.safe_load(open('./configs/covid.yaml', "r"))
+covid_alias = "".join([key + " -> " + info_covid['k2c'][key] + "\n" for key in info_covid['k2c']])
+help_covid = f"""^^covid <country name>\n
+The country name (case insensitive) is supposed to be official names of countries like Singapore, United Kingdom.\n
+Following alias is allowed:\n
+{covid_alias}
+Last update date:{info_covid['last_update']}\n
+NB: The signal of United stated of America is too week in abyss. so currently not supported.
+"""
+@bot.command(name='covid', enable=True, brief="15 days COVID bar chart", help=help_covid)
 async def covid_trend(ctx, *country):
         country = " ".join([item.strip() for item in country])
         # country = message.content.split(":")[-1].strip()
         response = get_covid.get_new_confirmed(dt=15, country=country)
         await ctx.send(response)
 
-
-
-@bot.command(name='meme', enable=True, help="memememememow")
+info_meme = yaml.safe_load(open("./configs/memes.yaml", "r"))
+meme_available = "".join([key + '\n' for key in info_meme['surjection']])
+help_meme = f"""^^meme <meme name> <content1> <content2> ...\n
+sample: ^^meme 表演一下 把心里想的说出来就好 想不到也没有办法, 我要去吃饭了.\n
+Tips:\n
+contents are splitted by space. In case content contains spaces, use double quotation marks to join "your content"\n
+command ^^meme <meme name> template will show the meme template\n
+Current available memes:\n
+{meme_available}
+"""
+@bot.command(name='meme', enable=True, brief="mememememememeow!",help=help_meme)
 async def meme_maker(ctx, template=None, *content):
     flag = 0
     print(content)
@@ -95,7 +105,7 @@ async def meme_maker(ctx, template=None, *content):
         picture = discord.File(response_img, filename="meme.png")
         await ctx.send(file=picture)
 
-@bot.command(name='开摆!', enable=True, help="摆还是不摆, 这是一个问题.")
+@bot.command(name='开摆!', enable=True, brief="摆还是不摆, 这是一个问题.", help="摆了不解释")
 async def kaibai_cmd(ctx):
     take_a_break = [
         "开摆!"*random.randint(1,30),
@@ -105,7 +115,15 @@ async def kaibai_cmd(ctx):
     response = random.choice(take_a_break)
     await ctx.send(response)
 
+help_secret = """
+do you wannt build a snowman?\n
+99!\n
++1\n
+Hey dosi I'm terribly sorry I'm just wondering if by any chance you happen to have time to very kindly inform me about the covid in the Germany\n
+"""
+@bot.command(name='secret', enable=True, brief="A secret makes Dosi Dosi", help=help_secret)
 
+# supp
 async def send_picture(src, message):
     with open(src, 'rb') as f:
         picture = discord.File(f)

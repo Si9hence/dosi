@@ -38,6 +38,8 @@ def maker_main(meme:str, sentences:list[str]):
         info = config['surjection'][meme]
         if 'font_size' not in info:
             info['font_size'] = [10 for _ in range(len(info['box']))]
+        if 'font_color' not in info:
+            info['font_color'] = ['b' for _ in range(len(info['box']))]
     else:
         return flag_success, None, None
 
@@ -52,7 +54,7 @@ def maker_main(meme:str, sentences:list[str]):
     contents = list()
     if len(sentences) < len(info['box']):
         sentences = sentences + [" " for _ in range(len(info['box']) - len(sentences))]
-    for idx, itm in enumerate(info['box']):
+    for idx, _ in enumerate(info['box']):
         # contents.append(
         #     {
         #         'content': sentences[idx],
@@ -60,14 +62,19 @@ def maker_main(meme:str, sentences:list[str]):
         #         'size': info['font_size'][idx]
         #     },
         # )
-
-        contents += get_sentences(txt=sentences[idx], box=info['box'][idx], font_size_min=info['font_size'][idx])
+        contents_raw = get_sentences(txt=sentences[idx], box=info['box'][idx], font_size_min=info['font_size'][idx])
+        for item in contents_raw:
+            item['font_color']=info['font_color'][idx]
+        contents += contents_raw
+        # print(contents)
+        # print(info)
     for content in contents:
         txt = content['content']
         txt_pos = content['pos']
         txt_size = content['size']
+        txt_color = tuple(config['font_color_mapping'][content['font_color']])
         # print(txt)
-        img = cv2AddText(img, text=txt, position=txt_pos, textColor=(0, 0, 0), textSize=txt_size)
+        img = cv2AddText(img, text=txt, position=txt_pos, textColor=txt_color, textSize=txt_size)
     is_success, buffer = cv2.imencode(".png", img)
     io_buf = io.BytesIO(buffer)
     flag_success = 1
@@ -85,7 +92,7 @@ def count_ascii(txt:str):
             cnt += 2
     return cnt
 
-def get_sentences(txt:str, box:list[int], font_size_min:int=15):
+def get_sentences(txt:str, box:list[int], font_size_min:int=15) -> list[dict]:
     # box in [left top width height]
     res = list()
     left, top, width, height = box
@@ -199,7 +206,7 @@ def maker_template(meme):
         text_origin = (math.ceil(center[0]-text_size[0]/2), math.ceil(center[1]+text_size[1]/2))
         cv2.putText(img, text=txt, org=text_origin, color=(71, 33, 0), fontFace=text_face, fontScale=text_scale, thickness=thickness)
     
-    cv2.putText(img, text=meme, org=(0, text_size[1]), color=(71, 33, 0), fontFace=text_face, fontScale=text_scale, thickness=thickness)
+    # cv2.putText(img, text=meme, org=(0, text_size[1]), color=(71, 33, 0), fontFace=text_face, fontScale=text_scale, thickness=thickness)
 
     is_success, buffer = cv2.imencode(".png", img)
     io_buf = io.BytesIO(buffer)
@@ -209,13 +216,14 @@ def maker_template(meme):
     # return img
     return flag_success, io_buf, img
 
-  
 
 if __name__ == "__main__":
     meme = '表演一下'
     meme = '我无法创造奇迹'
+    meme = '路口'
     sentences = ['把心里想的说出来就好', '想不到也没有办法, 我要去吃饭了. ']
     sentences = ['让时间永远停留在2月22号 我无法创造奇迹']
+    sentences = ['keep walking, even when its fucking hard','我怎么还活着啊', 'Vv']
     # sentences = ['12345678123456781234567812345678', '123456789098765432112345678909876543211234567890987654321']
     flag_success, io_buf, img= maker_main(meme, sentences)
     # flag_success, io_buf, img2= maker_template(meme)
