@@ -2,7 +2,7 @@ from numpy import datetime_as_string
 import pandas as pd
 import datetime
 import os
-import git
+# import git
 import yaml
 
 config = yaml.safe_load(open('./configs/covid.yaml', "r"))

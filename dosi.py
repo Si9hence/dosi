@@ -251,6 +251,8 @@ async def on_message(message):
         await message.channel.send(response)
     elif message.content == 'ᕕ( ᐛ )ᕗ':
         await message.channel.send("```'ᕕ( ᐛ )ᕗ'```")
+    # elif message.content == 'welcome back, I miss you... a little bit':
+    #     await message.channel.send("I know~```ᕕ( ᐛ )ᕗ```")
     else:
         pass
     await bot.process_commands(message)
