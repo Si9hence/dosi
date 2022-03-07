@@ -1,26 +1,38 @@
 # bot.py
 import os
 import random
+import platform
 import time
 import re
 
-import discord
-from discord.ext.commands import Bot
-from discord import Intents
+
+import disnake
+from disnake import ApplicationCommandInteraction
+from disnake.ext import tasks, commands
+from disnake.ext.commands import Bot
+from disnake.ext.commands import Context
+
+
+
+# import discord
+# from discord.ext.commands import Bot
 from dotenv import load_dotenv
 import yaml
-import get_covid
-import memes
+import supp.get_covid as get_covid
+import supp.memes as memes
 import io
-import cv2
+
+import supp.dosi_tool_kit as dosi_tool_kit
+# import cv2
 load_dotenv()
 # get_covid.data_update()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
-# intents = Intents.all()
-# client = discord.Client(proxy="http://localhost:7890")
-bot = Bot(command_prefix='^^', proxy="http://localhost:7890")
-# client = discord.Client(proxy="http://localhost:7890")
+intents = disnake.Intents.default()
+
+bot = Bot(command_prefix='^^', proxy="http://localhost:7890", intents=intents)
+
+# bot.load_extension("cogs.tool_kit_slash")
 
 # change presence
 # https://discordpy.readthedocs.io/en/stable/ext/commands/api.html#discord.ext.commands.Bot.change_presence
@@ -43,16 +55,35 @@ async def on_ready():
     # await bot.change_presence(activity = discord.Activity(
     #                       type = discord.ActivityType.playing, 
     #                       name = 'OutSIDe'))
-    await bot.change_presence(activity = discord.Activity(
-                          type = discord.ActivityType.playing, 
-                          name = 'with Labi'))
+    """
+    The code in this even is executed when the bot is ready
+    """
+    print(f"Logged in as {bot.user.name}")
+    print(f"disnake API version: {disnake.__version__}")
+    print(f"Python version: {platform.python_version()}")
+    print(f"Running on: {platform.system()} {platform.release()} ({os.name})")
+    print("-------------------")
+    print("Dosi wakes up!")
+    status_task.start()
 
-cog1 = "ko"
+@tasks.loop(minutes=5.0)
+async def status_task() -> None:
+    statuses = ["in Diasy!", "in Erica!", "in Lily!", "in Rose!", "in Sage!", "in Gypsophilia!"]
+    await bot.change_presence(activity=disnake.Game(random.choice(statuses)))
+
+
 @bot.command(name='server', enabled=False)
 async def fetchServerInfo(ctx):
 	guild = ctx.guild
 	await ctx.send(f'Server Name: {guild.name}')
 	await ctx.send(f'Server Size: {len(guild.members)}')
+
+@bot.command()
+async def showguilds(ctx):
+    message = ""
+    for guild in bot.guilds:
+         message += f"{guild.name}\n{guild.id}\n"
+    await ctx.send(message)
 
 info_covid = yaml.safe_load(open('./configs/covid.yaml', "r"))
 covid_alias = "".join([key + " -> " + info_covid['k2c'][key] + "\n" for key in info_covid['k2c']])
@@ -70,7 +101,7 @@ async def covid_trend(ctx, *country):
         response = get_covid.get_new_confirmed(dt=15, country=country)
         await ctx.send(response)
 
-info_meme = yaml.safe_load(open("./configs/memes.yaml", "r"))
+info_meme = yaml.safe_load(open("../configs/memes.yaml", "r"))
 meme_available = "".join([key + '\n' for key in info_meme['surjection']])
 help_meme = f"""^^meme <meme name> <content1> <content2> ...\n
 sample: ^^meme 表演一下 把心里想的说出来就好 想不到也没有办法, 我要去吃饭了.\n
@@ -102,7 +133,7 @@ async def meme_maker(ctx, template=None, *content):
     if flag == 0:
         await ctx.send('meme not found!')
     else:
-        picture = discord.File(response_img, filename="meme.png")
+        picture = disnake.File(response_img, filename="meme.png")
         await ctx.send(file=picture)
 
 @bot.command(name='开摆!', enable=True, brief="摆还是不摆, 这是一个问题.", help="摆了不解释")
@@ -123,17 +154,13 @@ Hey dosi I'm terribly sorry I'm just wondering if by any chance you happen to ha
 """
 @bot.command(name='secret', enable=True, brief="A secret makes Dosi Dosi", help=help_secret)
 
-# supp
-async def send_picture(src, message):
-    with open(src, 'rb') as f:
-        picture = discord.File(f)
-        await message.channel.send(file=picture)
-    return
+
 
 @bot.event
 async def on_message(message):
     if bot.user == message.author:
         return
+    
     # elif str(message.author) != "Si9H#0724":
     #     print(str(message.author))
     #     doutside()
@@ -242,7 +269,7 @@ async def on_message(message):
         else:
             await message.channel.send("Unfortunately, at the moment I am afraid that I don't have time to help you with your request. I am terribly sorry for that and I hope you find someone else to help you.")
     elif message.content == '99!':
-        await send_picture(src = "./data/img/sabwnk.jpg", message=message)
+        await dosi_tool_kit.send_picture(src = "./data/img/sabwnk.jpg", message=message)
     elif message.content == '开摆!':
         response = kaibai_legacy()
         await message.channel.send(response)

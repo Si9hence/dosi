@@ -5,26 +5,14 @@ import os
 # import git
 import yaml
 
-config = yaml.safe_load(open('./configs/covid.yaml', "r"))
+CONFIG = yaml.safe_load(open('./configs/covid.yaml', "r"))
 
 def make_rabbit(smth):
     rabbit = f" (\_/)\n(・_・)\n/  >{smth}\n"
     return rabbit
 
-
-def data_update():
-    td = datetime.datetime.now()
-    if  (td - datetime.datetime.strptime(config['last_update'], "%Y-%m-%d %H:%M:%S")).seconds > 7200:
-        config['last_update'] = td.strftime("%Y-%m-%d %H:%M:%S")
-        g = git.cmd.Git("/home/si9h/COVID-19")
-        g.pull()
-        yaml.dump(config, open('./configs/covid.yaml', "w"))
-        return
-    else:
-        return
-
 def kw_to_country(kw: str):
-    k2c = config['k2c']
+    k2c = CONFIG['k2c']
     if kw.lower() in k2c:
         return k2c[kw.lower()]
     else:
@@ -44,9 +32,11 @@ def get_new_confirmed(country: str, dt: int=20)->str:
         return res
     # data_update()
     # dt in YYYY-MM-DD
+    print(CONFIG)
     country = kw_to_country(kw=country)
+    print(country)
     # path_src = "./data/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports"
-    path_src = config['path_src']
+    path_src = CONFIG['path_src']
     files = [file.split('.')[0] for file in os.listdir(path_src)]
 
     t_1 = datetime.datetime.now()
