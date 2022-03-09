@@ -1,5 +1,4 @@
 # bot.py
-from http.client import CONFLICT
 import os
 import random
 import platform
@@ -20,33 +19,43 @@ from disnake.ext.commands import Context
 import yaml
 import supp.get_covid as get_covid
 import supp.memes as memes
+import io
 
 import supp.dosi_tool_kit as dosi_tool_kit
 # import cv2
 # get_covid.data_update()
-with open("./configs/dosi.yaml") as f:
-    CONFIG = yaml.safe_load(f)
+TOKEN = os.getenv('DISCORD_TOKEN')
 
-with open("./configs/token.yaml") as f:
-    TOKEN = yaml.safe_load(f)['token']
 intents = disnake.Intents.default()
 
-bot = Bot(command_prefix='^^', intents=intents)
+bot = Bot(command_prefix='^^', proxy="http://localhost:7890", intents=intents)
 
-bot.load_extension("cogs.tool_kit_slash")
-bot.load_extension("cogs.toy_box_slash")
-bot.load_extension("cogs.fun_normal")
+# bot.load_extension("cogs.tool_kit_slash")
 
+# change presence
+# https://discordpy.readthedocs.io/en/stable/ext/commands/api.html#discord.ext.commands.Bot.change_presence
 @bot.event
 async def on_ready():
     print(f'{bot.user.name} wakes up!')
+    # await bot.change_presence(activity = discord.Activity(
+    #     type = discord.ActivityType.competing,
+    #     name = 'Kindergarten'))
+
+    # activeservers = bot.guilds
+    # print(activeservers)
+    # for guild in activeservers:
+    #     if guild.id == 925477279142903868:
+    #         for channel in guild.channels:
+    #             print(guild.id, guild.name, channel.name, channel.created_at, channel.overwrites)
+    # await bot.change_presence(activity = discord.Activity(
+    #     type = discord.ActivityType.playing,
+    #     name = 'SOlO'))
+    # await bot.change_presence(activity = discord.Activity(
+    #                       type = discord.ActivityType.playing, 
+    #                       name = 'OutSIDe'))
     """
     The code in this even is executed when the bot is ready
     """
-    activeservers = bot.guilds
-    print(activeservers)
-    for guild in activeservers:
-        print(guild.id, guild.name)
     print(f"Logged in as {bot.user.name}")
     print(f"disnake API version: {disnake.__version__}")
     print(f"Python version: {platform.python_version()}")
@@ -57,13 +66,23 @@ async def on_ready():
 
 @tasks.loop(minutes=5.0)
 async def status_task() -> None:
-    statuses = ["in Daisy!", "in Erica!", "in Lily!", "in Rose!", "in Sage!", "in Gypsophilia!"]
+    statuses = ["in Diasy!", "in Erica!", "in Lily!", "in Rose!", "in Sage!", "in Gypsophilia!"]
     await bot.change_presence(activity=disnake.Game(random.choice(statuses)))
 
 
-# legacy
-## ^^ command
-### covid
+@bot.command(name='server', enabled=False)
+async def fetchServerInfo(ctx):
+	guild = ctx.guild
+	await ctx.send(f'Server Name: {guild.name}')
+	await ctx.send(f'Server Size: {len(guild.members)}')
+
+@bot.command()
+async def showguilds(ctx):
+    message = ""
+    for guild in bot.guilds:
+         message += f"{guild.name}\n{guild.id}\n"
+    await ctx.send(message)
+
 info_covid = yaml.safe_load(open('./configs/covid.yaml', "r"))
 covid_alias = "".join([key + " -> " + info_covid['k2c'][key] + "\n" for key in info_covid['k2c']])
 help_covid = f"""^^covid <country name>\n
@@ -80,8 +99,7 @@ async def covid_trend(ctx, *country):
         response = get_covid.get_new_confirmed(dt=15, country=country)
         await ctx.send(response)
 
-### memes
-info_meme = yaml.safe_load(open("./configs/memes.yaml", "r"))
+info_meme = yaml.safe_load(open("../configs/memes.yaml", "r"))
 meme_available = "".join([key + '\n' for key in info_meme['surjection']])
 help_meme = f"""^^meme <meme name> <content1> <content2> ...\n
 sample: ^^meme 表演一下 把心里想的说出来就好 想不到也没有办法, 我要去吃饭了.\n
@@ -91,16 +109,25 @@ command ^^meme <meme name> template will show the meme template\n
 Current available memes:\n
 {meme_available}
 """
-
-@bot.command(name='meme', enable=True, brief="mememememememeow!", help=help_meme)
-async def meme_maker(ctx, meme, *content):
+@bot.command(name='meme', enable=True, brief="mememememememeow!",help=help_meme)
+async def meme_maker(ctx, template=None, *content):
     flag = 0
-
-    if not content:
-        contents = list(" ")
+    print(content)
+    if template == None:
+        return
     else:
-        contents = list(content)
-    flag, response_img, _ = memes.maker_main(meme=meme, sentences=contents)
+        if not content:
+            contents = list(" ")
+        else:
+            contents = list(content)
+
+        if contents[0] == 'template':
+            print('meme template')
+            flag, response_img, _ = memes.maker_template(meme=template)
+        else:
+            print('meme normal')
+            flag, response_img, _ = memes.maker_main(meme=template, sentences=contents)
+    
     if flag == 0:
         await ctx.send('meme not found!')
     else:
@@ -117,7 +144,6 @@ async def kaibai_cmd(ctx):
     response = random.choice(take_a_break)
     await ctx.send(response)
 
-## vanilla
 help_secret = """
 do you wannt build a snowman?\n
 99!\n
@@ -125,6 +151,8 @@ do you wannt build a snowman?\n
 Hey dosi I'm terribly sorry I'm just wondering if by any chance you happen to have time to very kindly inform me about the covid in the Germany\n
 """
 @bot.command(name='secret', enable=True, brief="A secret makes Dosi Dosi", help=help_secret)
+
+
 
 @bot.event
 async def on_message(message):
@@ -253,5 +281,5 @@ async def on_message(message):
     else:
         pass
     await bot.process_commands(message)
-
 bot.run(TOKEN)
+# client.run(TOKEN)

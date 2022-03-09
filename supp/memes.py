@@ -8,7 +8,9 @@ from PIL import Image, ImageDraw, ImageFont
 import matplotlib.pyplot as plt
 import io
 import math
-config = yaml.safe_load(open("./configs/memes.yaml", "r"))
+import sys
+
+config = yaml.safe_load(open("/root/dosi/configs/memes.yaml", "r"))
 
 def search_img(meme, path_src=config['templates_path']) -> str:
     files = os.listdir(path_src)
@@ -32,7 +34,7 @@ def cv2AddText(img, text, position, textColor=(0, 0, 0), textSize=30, font=os.pa
 
     return cv2.cvtColor(np.asarray(img), cv2.COLOR_RGB2BGR)
 
-def maker_main(meme:str, sentences:list[str]):
+def maker_general(meme:str, sentences:list[str]):
     flag_success = 0
     if meme in config['surjection']:
         info = config['surjection'][meme]
@@ -171,7 +173,7 @@ def fitting_fs(txt:str, box:list[int], font_size_min=20):
     size = min(math.floor(width*2/cnt), height)
     return max(size, font_size_min)
 
-def maker_template(meme):
+def maker_template(meme:str):
     flag_success = 0
     if meme in config['surjection']:
         info = config['surjection'][meme]
@@ -216,6 +218,13 @@ def maker_template(meme):
     # return img
     return flag_success, io_buf, img
 
+def maker_main(meme:str, sentences):
+    if sentences[0] == 'template':
+        res = maker_template(meme)
+        return res
+    elif isinstance(sentences, list):
+        res = maker_general(meme, sentences)
+        return res
 
 if __name__ == "__main__":
     meme = '表演一下'

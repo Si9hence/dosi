@@ -5,7 +5,8 @@ import os
 # import git
 import yaml
 
-CONFIG = yaml.safe_load(open('./configs/covid.yaml', "r"))
+with open('./configs/covid.yaml', "r") as f:
+    CONFIG = yaml.safe_load(f)
 
 def make_rabbit(smth):
     rabbit = f" (\_/)\n(・_・)\n/  >{smth}\n"

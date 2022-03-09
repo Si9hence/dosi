@@ -1,7 +1,7 @@
 templates_path:
-  ./data/meme_templates
+  /root/dosi/data/meme_templates
 fonts_path:
-  ./data/fonts/
+  /root/dosi/data/fonts/
 font_name:
   simhei.ttf
   # SourceHanSansCN-Regular.otf

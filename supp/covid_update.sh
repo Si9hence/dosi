@@ -1,7 +1,5 @@
 #!/bin/bash
-
-cd /home/si9h/COVID-19
-sudo git config --global http.proxy http://127.0.0.1:7890
+cd /root/dosi/data/COVID-19
 while true
 do
 	sudo git pull
