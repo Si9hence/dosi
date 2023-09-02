@@ -7,7 +7,7 @@ import disnake
 from disnake import ApplicationCommandInteraction, Option, OptionType
 from disnake.ext import commands, tasks
 from supp import get_covid
-from temp import remind
+from supp import dosi_tool_kit
 import asyncio
 
 # init
@@ -107,7 +107,7 @@ class DosiToolkit(commands.Cog, name=":wrench:Dosi's toolkit"):
         'created': utcnow,
         'duration': datetime.timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds),
         'extra': None}
-        tmp = remind.Timer(info=info, bot=self.bot)
+        tmp = dosi_tool_kit.Timer(info=info, bot=self.bot)
         await interaction.send('Dosi will reminds u in 1 hours!')
         await tmp.dispatch()
 

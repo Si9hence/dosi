@@ -82,6 +82,41 @@ def get_new_confirmed(country: str, dt: int=20)->str:
     res = bar_chat(info)
     return res
 
+def get_temp(country: str, dt: int=100):
+        # data_update()
+    # dt in YYYY-MM-DD
+    print(CONFIG)
+    country = kw_to_country(kw=country)
+    print(country)
+    # path_src = "./data/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports"
+    path_src = CONFIG['path_src']
+    files = [file.split('.')[0] for file in os.listdir(path_src)]
+
+    t_1 = datetime.datetime.now()
+    t_1_mdy = t_1.strftime("%m-%d-%Y")
+
+    for retry in range(5):
+        t_1 = t_1 - datetime.timedelta(days=1)
+        t_1_mdy = t_1.strftime("%m-%d-%Y")
+        if t_1_mdy in files:
+            break
+        elif retry == 5:
+            return f"now data found in the last {retry} days"
+
+    ts = [t_1-datetime.timedelta(days=i) for i in range(0, dt+1)]
+    info = list()
+    for t in ts:
+        t_mdy = t.strftime("%m-%d-%Y")
+        tmp = pd.read_csv(path_src + "/" + f"{t_mdy}.csv")
+        if country not in tmp['Country_Region'].values:
+            return "country error"
+        info.append([t, sum(tmp['Confirmed'].loc[tmp['Country_Region'] == country])])
+    
+    for i in range(len(info)-1):
+        info[i][-1] =  info[i][-1]  - info[i+1][-1]
+    info.pop()
+    info = info[::-1]
+    return info
 if __name__ == "__main__":
     data = pd.read_csv('/home/si9h/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/01-01-2021.csv')
     res = get_new_confirmed(country="Germany", dt=20)

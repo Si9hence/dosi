@@ -77,7 +77,6 @@ async def on_ready():
     print("-------------------")
     print(f'{bot.user.name} wakes up!')
     status_task.start()
-    # member_list.start()
 
 @bot.event
 async def on_voice_state_update(member, before, after):
